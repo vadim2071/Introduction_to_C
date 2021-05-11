@@ -3,7 +3,7 @@ using System.IO;
 
 //Написать программу, которая при старте дописывает текущее время в файл «startup.txt».
 
-namespace task1
+namespace task2
 {
     class Program
     {
