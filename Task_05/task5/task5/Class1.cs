@@ -11,6 +11,7 @@ namespace task5
         public string Title { get; set; }
         public bool IsDone { get; set; }
 
+        //конструктор
         public ToDo(string title, bool isdone)
         {
             Title = title;
