@@ -30,14 +30,13 @@ namespace task5
             {
                 if (MenuSelect == "0")
                 {
-                    // тут надо принять задачу
+                    // получаем новую задачу
                     NewTask = GetNewTask();
-                    // тут надо записать в файл задачу
 
+                    // тут надо записать в файл задачу
                 } else
                 {
                     // помечаем задачу выполненой
-
                 }
                                 
                 Console.Clear();
@@ -58,7 +57,8 @@ namespace task5
             }
             else
             {
-                Console.WriteLine("Задач нет");
+                Console.WriteLine("Файл задач не найден, создан пустой список задач");
+                File.Create(file);
             }
         }
 
