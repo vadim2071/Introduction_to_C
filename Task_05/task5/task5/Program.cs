@@ -4,6 +4,24 @@ using System.Text.Json;
 
 namespace task5
 {
+    class ToDo
+    {
+        public string Title { get; set; }
+        public bool IsDone { get; set; }
+
+        /*public ToDo()
+        {
+
+        }
+        */
+
+        //конструктор
+        public ToDo(string title, bool isdone)
+        {
+            Title = title;
+            IsDone = isdone;
+        }
+    }
     class Program
     {
         /* Список задач (ToDo-list):
@@ -18,12 +36,12 @@ namespace task5
         - записать актуальный массив задач в файл tasks.json/xml/bin.*/
         static void Main(string[] args)
         {
+            string FilePass = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\"; //переменная для хранения пути до файла на рабочем столе
             string filename = "tasks.json"; //имя файла для записи
-            string MenuSelect = "";
+            string MenuSelect = ""; //
+
             ToDo NewTask;
-            //переменная для хранения пути до файла на рабочем столе
-            string FilePass = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\";
-            
+
             PrintListToDo(FilePass + filename);
 
             while (MenuSelect != "q")
@@ -33,7 +51,9 @@ namespace task5
                     // получаем новую задачу
                     NewTask = GetNewTask();
 
-                    // тут надо записать в файл задачу
+                    // записываем в файл задачу
+                    SaveTask(FilePass + filename, NewTask);
+
                 } else
                 {
                     // помечаем задачу выполненой
@@ -47,14 +67,36 @@ namespace task5
             
 
         }
+        
 
-        //метод выводы списка задач на экран
-        static void PrintListToDo(string file)
+        static void SaveTask(string file, ToDo task) // метод сериализации задач - task в файл - file
+        {
+            string json = JsonSerializer.Serialize(task);
+            File.AppendAllText(file, Environment.NewLine);
+            File.AppendAllText(file, json);
+        }
+
+
+        static void PrintListToDo(string file) //метод выводы списка задач на экран
         {
             if (File.Exists(file))
             {
-                // тут надо вывести список задач
-            }
+                string [] json = File.ReadAllLines(file);
+                Console.WriteLine("№ \t Выполнено \t Задача");
+                ToDo Tasks;
+
+
+                for (int i = 0; i < json.Length; i++)
+                {
+                    Tasks = JsonSerializer.Deserialize<ToDo>(json[i]);
+                    Console.WriteLine("{0} \t {1} \t {2}", i, Tasks.IsDone, Tasks.Title);
+                }
+
+                
+               
+                
+                
+             }
             else
             {
                 Console.WriteLine("Файл задач не найден, создан пустой список задач");
@@ -62,15 +104,13 @@ namespace task5
             }
         }
 
-        // метод выбора действия
-        static string GetMenuSelect()
+        static string GetMenuSelect()         // метод выбора действия
         {
             Console.WriteLine("Ведите номер задачи для ее завершения или \n 0 - добавить задачу | q - закончить работу");
             return Console.ReadLine();
         }
 
-        // метод ввода новой задачи
-        static ToDo GetNewTask()
+        static ToDo GetNewTask()         // метод ввода новой задачи
         {
             Console.WriteLine("Введите задачу");
             string TaskName = Console.ReadLine();
