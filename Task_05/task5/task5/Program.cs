@@ -9,12 +9,6 @@ namespace task5
         public string Title { get; set; }
         public bool IsDone { get; set; }
 
-        /*public ToDo()
-        {
-
-        }
-        */
-
         //конструктор
         public ToDo(string title, bool isdone)
         {
@@ -24,6 +18,10 @@ namespace task5
     }
     class Program
     {
+        // ВЕРСИЯ 2.
+        // РЕАЛИЗАЦИЯ с использованием массивов, уменьшает количество операция чтения / записи в файл
+
+
         /* Список задач (ToDo-list):
         - написать приложение для ввода списка задач;
         + задачу описать классом ToDo с полями Title и IsDone;
@@ -39,18 +37,22 @@ namespace task5
             string FilePass = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\"; //переменная для хранения пути до файла на рабочем столе
             string filename = "tasks.json"; //имя файла для записи
             string MenuSelect = ""; // выбор действия
-            bool newFile = false; //признак существования файла хранения списка задач 
-
+            ToDo[] ToDoList = { }; //массив для хранения всех задач
+            ToDo Tasks; // для промежуточного хранения задач
             ToDo NewTask;
 
-            if (!File.Exists(FilePass + filename)) //проверяем существоание файла
+            if (!File.Exists(FilePass + filename)) File.Create(FilePass + filename).Close(); //проверяем существоание файла
+
+            //читаем в массив все задачи из файла
+            string[] jsonIN = File.ReadAllLines(FilePass + filename);
+            for (int i = 0; i < jsonIN.Length; i++)
             {
-                Console.WriteLine("Файл задач не найден, создан пустой список задач");
-                File.Create(FilePass + filename).Close();
-                newFile = true;
+                Tasks = JsonSerializer.Deserialize<ToDo>(jsonIN[i]);
+                Array.Resize(ref ToDoList, ToDoList.Length + 1);
+                ToDoList[i] = Tasks;
             }
 
-                PrintListToDo(FilePass + filename);
+            PrintListToDo(ToDoList); //выводим список задач на экран первый раз
 
             while (MenuSelect != "q")
             {
@@ -59,65 +61,62 @@ namespace task5
                     // вводим новую задачу
                     NewTask = GetNewTask();
 
-                    // сохраняем в файл задачу
-                    SaveTask(FilePass + filename, NewTask, newFile);
-                    newFile = false;
-
+                    // добавляем задачу
+                    ToDoList = SaveTask(ToDoList, NewTask);
                 }
                 else
                 {
-                    if (MenuSelect != "") EndTask(FilePass + filename, Convert.ToInt32(MenuSelect)); // помечаем задачу выполненой
+                    if (MenuSelect != "")
+                    {
+                        ToDoList = EndTask(ToDoList, Convert.ToInt32(MenuSelect)); // помечаем задачу выполненой и получаем измененный массив с задачами
+                    }
                 }
 
 
                 Console.Clear();
-                PrintListToDo(FilePass + filename); // выводим список задач
+                PrintListToDo(ToDoList); // выводим список задач
                 MenuSelect = GetMenuSelect(); //запрашиваем что мы хотим сделать
             }
 
+            //Сохраняем результат в файл
+            File.Create(FilePass + filename).Close();
+            string jsonOut;
 
+            jsonOut = JsonSerializer.Serialize(ToDoList[0]); // первая запись делается без добавления новой строки
+            File.AppendAllText(FilePass + filename, jsonOut);
 
-        }
-
-        static void EndTask(string file, int numTask) // метод завершения выбранной задачи. согласен что коряво, все в кучу свалено, файл пишется в нескольких методах. Но уже не успеваю причесать все к сроку
-        {
-            ToDo Tasks;
-            string[] jsonIN = File.ReadAllLines(file);
-
-            File.WriteAllText(file, ""); //очищаем файл для перезаписи измененных задач
-
-            for (int i = 0; i < jsonIN.Length; i++)
+            for (int i = 1; i < ToDoList.Length; i++)
             {
-                Tasks = JsonSerializer.Deserialize<ToDo>(jsonIN[i]);
-                if ((numTask - 1) == i) Tasks.IsDone = true;
-
-                string json = JsonSerializer.Serialize(Tasks);
-                if (i != 0) File.AppendAllText(file, Environment.NewLine);
-                File.AppendAllText(file, json);
+                jsonOut = JsonSerializer.Serialize(ToDoList[i]);
+                File.AppendAllText(FilePass + filename, Environment.NewLine);
+                File.AppendAllText(FilePass + filename, jsonOut);
             }
+            
 
         }
 
-        static void SaveTask(string file, ToDo task, bool newFile) // метод сериализации задач - task в файл - file
+        static ToDo [] EndTask(ToDo [] ToDoList, int numTask) // метод завершения выбранной задачи.
         {
-            string json = JsonSerializer.Serialize(task);
-            if (!newFile) File.AppendAllText(file, Environment.NewLine); //при заполнении нового пустого файла не нужно добавлять новую строку
-            File.AppendAllText(file, json);
+            ToDoList[numTask - 1].IsDone = true;
+            return ToDoList;
         }
 
-        static void PrintListToDo(string file) //метод выводы списка задач на экран
+        static ToDo [] SaveTask(ToDo [] ToDoList, ToDo NewTask) // Добавляем в массив новую задачу
+        {
+            Array.Resize(ref ToDoList, ToDoList.Length + 1);
+            ToDoList[ToDoList.Length - 1] = NewTask;
+            return ToDoList;
+        }
+
+        static void PrintListToDo(ToDo [] ToDoList) //метод выводы списка задач на экран
         {
             char isdone = ' ';
-
-            string[] json = File.ReadAllLines(file);
             Console.WriteLine("№ \t Выполнено \t Задача");
-            ToDo Tasks;
 
-            for (int i = 0; i < json.Length; i++)
+            for (int i = 0; i < ToDoList.Length; i++)
             {
-                Tasks = JsonSerializer.Deserialize<ToDo>(json[i]);
-                if (Tasks.IsDone) isdone = 'X';
-                Console.WriteLine("{0} \t {1} \t \t {2}", i + 1, isdone, Tasks.Title);
+                if (ToDoList[i].IsDone) isdone = 'X';
+                Console.WriteLine("{0} \t {1} \t \t {2}", i + 1, isdone, ToDoList[i].Title);
                 isdone = ' ';
             }
 
@@ -125,7 +124,7 @@ namespace task5
 
         static string GetMenuSelect()         // метод выбора действия
         {
-            Console.WriteLine("Ведите номер задачи для ее завершения или \n 0 - добавить задачу | q - закончить работу");
+            Console.WriteLine("Ведите номер задачи для ее завершения или \n 0 - добавить задачу | q - закончить работу и для сохранения результата");
             return Console.ReadLine();
         }
 
@@ -138,5 +137,3 @@ namespace task5
         }
     }
 }
-
-
