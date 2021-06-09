@@ -6,6 +6,16 @@ using Microsoft.Extensions.Configuration;
 using System.Resources;
 using System.Reflection;
 
+
+//https://api.nuget.org/v3/index.json
+//nuget.org
+// install nuget packet
+//Microsoft.Extensions.Configuration
+//Microsoft.Extensions.Configuration.Abstractions
+//Microsoft.Extensions.Configuration.Binder
+//Microsoft.Extensions.Configuration.Json
+//System.Configuration.ConfigurationManager
+
 namespace task
 {
     class Program
